@@ -1,5 +1,5 @@
 import React, { Component, PropTypes } from 'react'
-import { connect } from '../utils/react-flows'
+import { connect } from '../utils/react-reflow'
 import '../models/counter';
 import ReactDOM from 'react-dom';
 

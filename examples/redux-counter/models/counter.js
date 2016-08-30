@@ -1,4 +1,4 @@
-import flows from '../utils/react-flows';
+import flows from '../utils/react-reflow';
 
 flows.model('counter',{
 
