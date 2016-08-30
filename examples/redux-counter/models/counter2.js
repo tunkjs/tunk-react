@@ -1,37 +1,35 @@
-import {model} from '../utils/react-reflow';
+import {extend} from '../utils/react-reflow';
 
 
 
+@extend({isolate:'deep'})
+export default class counter {
 
+  setInitialState(){
+    return {
+      count: 0
+    }
+  }
 
-
-
-
-model('counter',{
-
-  default:{
-    count: 0,
-  },
-
-  increment:function(opt){
+  increment(){
     console.log(this);
     return {count:this.getState().count+1};
-  },
+  }
 
-  decrement:function(){
+  decrement(){
     return {count:this.getState().count-1};
-  },
+  }
 
-  incrementIfOdd:function(){
+  incrementIfOdd(){
     if ((this.getState().count + 1) % 2 === 0) {
       this.increment();
     }
-  },
+  }
 
-  incrementAsync:function(){
+  incrementAsync(){
     setTimeout(() => {
       this.dispatch('increment')
     }, 1000)
-  },
+  }
+}
 
-});

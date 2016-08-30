@@ -8,15 +8,12 @@ var store = {},
     proto,
     middlewares = [],
     hook_beforeStore = [],
-    hook_beforeFlowIn = [];
+    hook_beforeFlowIn = [],
+    config={isolation:'deep'};
 
-var flows ={
-    config:{
-        cloneMode:'deep', //deep,shallow
-    },
-};
+var reflow ={};
 
-flows.model = function (name, opts) {
+reflow.model = function (name, opts) {
 
     if (!name || !opts) throw 'two arguments are required';
     if (!opts.default || opts.default.constructor !== Object) throw 'please set an default object-type property to be the default data of the model';
@@ -59,13 +56,14 @@ flows.model = function (name, opts) {
 };
 
 
-flows.dispatch = function (modelName, options) {
+
+reflow.dispatch = function (modelName, options) {
     if (modelName && modelName.constructor === String)
-        storeState(options, modelName, 'flows.');
+        storeState(options, modelName, 'reflow');
     else throw 'the first argument should be a model name the second shuould be a plain object';
 };
 
-flows.bind = function (bindName, func) {
+reflow.bind = function (bindName, func) {
     if (typeof func === 'function')
         switch (bindName) {
             case 'beforeStore':
@@ -77,17 +75,21 @@ flows.bind = function (bindName, func) {
     else throw 'a callback as the second argument is needed';
 };
 
-flows.addMiddleware = function (middleware) {
+reflow.addMiddleware = function (middleware) {
     if (typeof middleware === 'object' && middleware.constructor === Array)
         middlewares = middlewares.concat(middleware);
     else if (typeof middleware === 'function') middlewares.push(middleware);
 };
 
-flows.mixin = function (obj) {
+reflow.mixin = function (obj) {
     Object.assign(protos, obj);
 };
 
-flows.addMiddleware(function(dispatch, next, end, context){
+reflow.config=function(obj){
+    Object.assign(config, obj);
+};
+
+reflow.addMiddleware(function(dispatch, next, end, context){
     return function(name, options){
         if(typeof name !== 'string') {
             return next(arguments);
@@ -100,7 +102,7 @@ flows.addMiddleware(function(dispatch, next, end, context){
     };
 });
 
-flows.mixin({
+reflow.mixin({
 
     each: function (obj, cb) {
         if (typeof obj === 'object') {
@@ -221,7 +223,7 @@ function run_beforeFlowIn_hooks(comp, meta) {
     }
 }
 
-flows.connect = function connect(pipes = {}, actions={}) {
+reflow.connect = function connect(pipes = {}, actions={}) {
 
     return function (TargetComponent) {
 
@@ -248,18 +250,11 @@ flows.connect = function connect(pipes = {}, actions={}) {
         };
 
 
-        class Flows extends Component {
+        class Connect extends Component {
 
             constructor() {
                 super(...arguments)
-                if(this._FLOWS_INIT_) this.state = this._FLOWS_INIT_();
-                else this.state={}
-
-            }
-
-            _FLOWS_INIT_ (){
-
-                var default_props={};
+                var default_state={};
 
                 if (pipes) {
                     for (var x in pipes) if (pipes.hasOwnProperty(x)) {
@@ -271,11 +266,14 @@ flows.connect = function connect(pipes = {}, actions={}) {
                             statePath: statePath,
                         });
                         //设置组件默认数据
-                        default_props[x] = pathValue(statePath);
+                        default_state[x] = pathValue(statePath);
                     }
+
+                    this.state = default_state;
                 }
 
-                return default_props;
+
+
             }
 
             componentWillUnmount(){
@@ -296,7 +294,7 @@ flows.connect = function connect(pipes = {}, actions={}) {
                 return <TargetComponent {...this.state} {...this.props} />
             }
         }
-        return Flows
+        return Connect
     }
 }
 
@@ -322,8 +320,11 @@ function pathValue(statePath) {
 }
 
 function clone(obj) {
+
+    if(config.isolation==='none') return obj;
+
     if (typeof obj === 'object')
-        return flows.config.cloneMode==='deep' ?
+        return config.isolation==='deep' ?
             JSON.parse(JSON.stringify(obj)):
             ( obj.constructor===Array ? obj.slice() : Object.assign({},obj) );
     else return obj;
@@ -350,7 +351,7 @@ function apply(func, args, context) {
 }
 
 
-export default flows;
+export default reflow;
 
 
 
