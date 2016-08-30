@@ -5,7 +5,7 @@ import {extend} from '../utils/react-reflow';
 @extend({isolate:'deep'})
 export default class counter {
 
-  setInitialState(){
+  initState() {
     return {
       count: 0
     }

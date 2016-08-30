@@ -16,12 +16,30 @@ var flows ={
     },
 };
 
-flows.model = function (name, opts) {
+flows.extend = function(opts){
 
-    if (!name || !opts) throw 'two arguments are required';
-    if (!opts.default || opts.default.constructor !== Object) throw 'please set an default object-type property to be the default data of the model';
+    return function(target){
+        var name=target.name;
+        return extend(name, target.prototype);
+    }
+};
 
-    store[name] = clone(opts.default);
+function extend(name, protos) {
+
+    if (!name || !protos) throw 'two arguments are required';
+
+    if(!protos.initState||typeof protos.initState !=='function') {
+        throw 'the method initState is required';
+    }
+
+    var defaultState = protos.initState();
+
+    if (!defaultState || defaultState.constructor !== Object) throw 'please return an plain object in the method of initState as the default state';
+
+    store[name] = clone(defaultState);
+
+    delete protos.initState;
+
     //定义一个model类
     function Model() {
         this.name = name;
@@ -33,13 +51,13 @@ flows.model = function (name, opts) {
     }, protos);
 
 
-    for (var x in opts) if (opts.hasOwnProperty(x) && x != 'default') {
+    for (var x in protos) if (protos.hasOwnProperty(x) && x != 'default') {
         proto[x] = (function (modelName, actionName) {
 
             proto.dispatch = dispatch;
 
             return function () {
-                var result = apply(opts[actionName], arguments, models[modelName]);
+                var result = apply(protos[actionName], arguments, models[modelName]);
                 if (typeof result !== 'undefined') return dispatch.call(models[modelName], result);
             };
 
@@ -54,7 +72,7 @@ flows.model = function (name, opts) {
         })(name, x);
     }
 
-    models[name] = new Model();
+    return (models[name] = new Model());
 
 };
 
