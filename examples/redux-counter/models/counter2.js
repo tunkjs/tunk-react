@@ -14,7 +14,7 @@ export default class counter {
   @action
   increment(){
     console.log(this);
-    return {count:this.state.count+1};
+    return {count:this.addOne()};
   }
 
   @action
@@ -34,6 +34,10 @@ export default class counter {
     setTimeout(() => {
       this.dispatch('increment')
     }, 1000)
+  }
+
+  addOne(){
+    return this.state.count+1;
   }
 }
 
