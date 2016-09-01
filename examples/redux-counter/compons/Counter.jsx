@@ -3,21 +3,25 @@ import { connect } from '../utils/react-reflow'
 import '../models/counter2';
 import ReactDOM from 'react-dom';
 
-
-
 @connect
 class Btn extends Component {
+
+  static propType = {
+    count: PropTypes.number.isRequired
+  }
 
   decrement(){
     this.dispatch('counter.decrement');
   }
 
   render() {
+    console.log(this);
     return (
         <button onClick={this.decrement.bind(this)}>-</button>
     )
   }
 }
+
 
 @connect({
   count: 'counter.count'

@@ -247,7 +247,10 @@ function run_beforeFlowIn_hooks(comp, meta) {
 
 flows.connect = function connect(pipes = {}, actions={}) {
 
-    if(typeof pipes === 'function') return connect_(pipes);
+    if(typeof pipes === 'function') {
+        pipes={};
+        return connect_(arguments[0]);
+    }
 
     return connect_;
 
