@@ -1,15 +1,29 @@
 import React, { Component, PropTypes } from 'react'
 import { connect } from '../utils/react-reflow'
-import '../models/counter';
+import '../models/counter2';
 import ReactDOM from 'react-dom';
 
+
+
+@connect
+class Btn extends Component {
+
+  decrement(){
+    this.dispatch('counter.decrement');
+  }
+
+  render() {
+    return (
+        <button onClick={this.decrement.bind(this)}>-</button>
+    )
+  }
+}
 
 @connect({
   count: 'counter.count'
 },{
   incrementIfOdd:'counter.incrementIfOdd',
   incrementAsync:'counter.incrementAsync',
-  decrement:'counter.decrement'
 })
 export default class Counter extends Component {
 
@@ -36,9 +50,9 @@ export default class Counter extends Component {
       <p>
         Clicked: {count}  times
         {' '}
-        <button ref='btn1' onClick={::this.increment__}>+</button>
+        <button ref='btn1' onClick={this.increment__.bind(this)}>+</button>
         {' '}
-        <button onClick={decrement}>-</button>
+        <Btn/>
         {' '}
         <button onClick={incrementIfOdd}> incrementIfOdd </button>
         {' '}

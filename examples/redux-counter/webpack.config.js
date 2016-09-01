@@ -25,8 +25,8 @@ module.exports = {
 			exclude: /(node_modules)/,
 			loader: 'babel',
 			query: {
-				stage: 0,
-				optional: ['runtime'],
+              "presets": ["es2015", "stage-2", "react"],
+              "plugins": ["transform-decorators-legacy"]
 			},
 		}
     ]

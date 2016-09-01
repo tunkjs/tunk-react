@@ -1,12 +1,5 @@
 import {model} from '../utils/react-reflow';
 
-
-
-
-
-
-
-
 model('counter',{
 
   default:{

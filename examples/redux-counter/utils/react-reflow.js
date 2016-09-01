@@ -4,8 +4,7 @@ import React,{ Component } from 'react'
 var store = {},
     models = {},
     connections = [],
-    protos = {},
-    proto,
+    mixins = {},
     middlewares = [],
     hook_beforeStore = [],
     hook_beforeFlowIn = [];
@@ -16,63 +15,74 @@ var flows ={
     },
 };
 
-flows.extend = function(opts){
 
-    return function(target){
-        var name=target.name;
-        return extend(name, target.prototype);
-    }
-};
+flows.action= function action(target, property, descriptor){
+    target[property]._isAction_=true;
+    //return descriptor;
+}
 
-function extend(name, protos) {
+
+flows.extend =  function(opt){
+    console.log(arguments);
+    if(typeof opt === 'function'){
+        return extend(opt.name, opt);
+    }else return function(target, property, descriptor){
+            return extend(target.name, target);
+        };
+}
+
+function extend(name, target) {
+
+    var protos = target.prototype;
 
     if (!name || !protos) throw 'two arguments are required';
 
-    if(!protos.initState||typeof protos.initState !=='function') {
-        throw 'the method initState is required';
+    Object.assign(protos, mixins, {
+        getState : function getState(otherModelName) {
+            if (!otherModelName) return clone(store[name]);
+            else return clone(store[otherModelName]);
+        }
+    });
+
+    Object.defineProperties(protos, {'state': {
+        get: function () {
+            return this.getState();
+        },
+        set:function(){
+            throw 'you can not set state via the property of state, please use dispatch instead';
+        }
+    }});
+
+    var properties = Object.getOwnPropertyNames(target.prototype);
+
+    for (var i=0,l=properties.length,x=properties[i];i<l;i++,x=properties[i]) {
+
+        if(protos[x]&&protos[x]._isAction_)
+            protos[x] = (function (modelName, actionName, originAction) {
+
+                protos.dispatch = dispatch;
+
+                return function () {
+                    var result = apply(originAction, arguments, models[modelName]);
+                    if (typeof result !== 'undefined') return dispatch.call(models[modelName], result);
+                };
+
+                function dispatch() {
+                    return run_middlewares(this, arguments, {
+                        modelName: modelName,
+                        actionName: actionName,
+                        models: models,
+                        store: store,
+                    }, dispatch);
+                }
+            })(name, x, protos[x]);
     }
 
-    var defaultState = protos.initState();
+    store[name] = {};
 
-    if (!defaultState || defaultState.constructor !== Object) throw 'please return an plain object in the method of initState as the default state';
+    models[name] = new target();
 
-    store[name] = clone(defaultState);
-
-    delete protos.initState;
-
-    //定义一个model类
-    function Model() {
-        this.name = name;
-    }
-
-    proto = Model.prototype = Object.assign({
-        constructor: Model,
-        getState: getState,
-    }, protos);
-
-
-    for (var x in protos) if (protos.hasOwnProperty(x) && x != 'default') {
-        proto[x] = (function (modelName, actionName) {
-
-            proto.dispatch = dispatch;
-
-            return function () {
-                var result = apply(protos[actionName], arguments, models[modelName]);
-                if (typeof result !== 'undefined') return dispatch.call(models[modelName], result);
-            };
-
-            function dispatch() {
-                return run_middlewares(this, arguments, {
-                    modelName: modelName,
-                    actionName: actionName,
-                    models: models,
-                    store: store,
-                }, dispatch);
-            }
-        })(name, x);
-    }
-
-    return (models[name] = new Model());
+    return models[name];
 
 };
 
@@ -102,7 +112,7 @@ flows.addMiddleware = function (middleware) {
 };
 
 flows.mixin = function (obj) {
-    Object.assign(protos, obj);
+    Object.assign(mixins, obj);
 };
 
 flows.addMiddleware(function(dispatch, next, end, context){
@@ -154,10 +164,6 @@ flows.mixin({
 
 });
 
-function getState(otherModelName) {
-    if (!otherModelName) return clone(store[this.name]);
-    else return clone(store[otherModelName]);
-}
 
 
 function run_middlewares(model, args, context, dispatch) {
@@ -241,9 +247,13 @@ function run_beforeFlowIn_hooks(comp, meta) {
 
 flows.connect = function connect(pipes = {}, actions={}) {
 
-    return function (TargetComponent) {
+    if(typeof pipes === 'function') return connect_(pipes);
 
-        if (actions) {
+    return connect_;
+
+    function connect_(TargetComponent) {
+
+        if (Object.keys(actions).length) {
             var action;
             for (var x in actions) if (actions.hasOwnProperty(x)) {
                 action = actions[x].split('.');
@@ -272,14 +282,13 @@ flows.connect = function connect(pipes = {}, actions={}) {
                 super(...arguments)
                 if(this._FLOWS_INIT_) this.state = this._FLOWS_INIT_();
                 else this.state={}
-
             }
 
             _FLOWS_INIT_ (){
 
                 var default_props={};
 
-                if (pipes) {
+                if (Object.keys(pipes).length) {
                     for (var x in pipes) if (pipes.hasOwnProperty(x)) {
                         var statePath = pipes[x].split('.');
                         connections[statePath[0]] = connections[statePath[0]] || [];
@@ -297,7 +306,7 @@ flows.connect = function connect(pipes = {}, actions={}) {
             }
 
             componentWillUnmount(){
-                if (pipes) {
+                if (Object.keys(pipes).length) {
                     var statePath, tmp;
                     for (var x in pipes) if (pipes.hasOwnProperty(x)) {
                         statePath = pipes[x].split('.');
@@ -368,7 +377,12 @@ function apply(func, args, context) {
 }
 
 
-export default flows;
+if (typeof module === 'object' && module.exports) {
+    module.exports = flows
+}
+else if (typeof define === 'function' && define.amd) {
+    define(function () { return flows })
+}
 
 
 

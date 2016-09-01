@@ -1,31 +1,35 @@
-import {extend} from '../utils/react-reflow';
+import {extend, action} from '../utils/react-reflow';
 
 
-
-@extend({isolate:'deep'})
+@extend
 export default class counter {
 
-  initState() {
-    return {
-      count: 0
-    }
+  //不允许异步，应该保持简单
+  constructor(){
+    this.dispatch({
+      count:0
+    });
   }
 
+  @action
   increment(){
     console.log(this);
-    return {count:this.getState().count+1};
+    return {count:this.state.count+1};
   }
 
+  @action
   decrement(){
-    return {count:this.getState().count-1};
+    return {count:this.state.count-1};
   }
 
+  @action
   incrementIfOdd(){
-    if ((this.getState().count + 1) % 2 === 0) {
+    if ((this.state.count + 1) % 2 === 0) {
       this.increment();
     }
   }
 
+  @action
   incrementAsync(){
     setTimeout(() => {
       this.dispatch('increment')
