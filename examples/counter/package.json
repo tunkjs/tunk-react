@@ -1,10 +1,13 @@
 {
-  "name": "react-flows-counter-example",
+  "name": "counter-example",
   "version": "0.0.0",
-  "description": "react-flows counter example",
+  "description": "tunk-react counter example",
   "dependencies": {
     "react": "^0.14.0",
-    "react-dom": "^0.14.0"
+    "react-dom": "^0.14.0",
+    "tunk":"latest",
+    "tunk-react":"latest",
+    "tunk-action-middleware":"latest"
   },
   "devDependencies": {
     "babel-core": "^6.0.0",
@@ -17,10 +20,7 @@
     "babel-preset-stage-0": "^6.5.0",
     "babel-preset-stage-1": "^6.1.18",
     "babel-runtime": "^6.3.13",
-    "expect": "^1.6.0",
     "express": "^4.13.3",
-    "jsdom": "^5.6.1",
-    "mocha": "^2.2.5",
     "node-libs-browser": "^0.5.2",
     "react-addons-test-utils": "^0.14.0",
     "react-transform-hmr": "^1.0.0",

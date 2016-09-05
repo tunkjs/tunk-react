@@ -1,6 +1,6 @@
 import React, { Component, PropTypes } from 'react'
-import { connect } from '../utils/react-reflow'
-import '../models/counter2';
+import { connect } from 'tunk-react'
+import '../store/counter';
 import ReactDOM from 'react-dom';
 
 @connect

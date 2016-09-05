@@ -1,2 +1,3 @@
-# react-flow
+# tunk-react
 
+React bindings for tunk.
