@@ -140,8 +140,8 @@
 				var action;
 				for (var x in actionOptions) if (actionOptions.hasOwnProperty(x)) {
 					action = actionOptions[x];
-					if (!modules[action[0]]) throw 'unknow module name:' + action[0];
-					if (!modules[action[0]][action[1]]) throw 'unknow action name:' + action[1] + ' of module:' + action[0];
+					if (!modules[action[0]]) throw 'unknown module name:' + action[0];
+					if (!modules[action[0]][action[1]]) throw 'unknown action name:' + action[1] + ' of module:' + action[0];
 					target[x] = (function (moduleName, actionName) {
 						return function () {
 							apply(modules[moduleName][actionName], arguments, modules[moduleName]);
@@ -153,8 +153,8 @@
 		},
 		setDispatchMethod: function (target, name, makeDispatch) {
 			target[name] = makeDispatch(function (moduleName, actionName) {
-				if (!modules[moduleName]) throw 'unknow module name:' + moduleName + '.';
-				if (!modules[moduleName][actionName]) throw 'unknow action name:' + actionName + ' of module:' + moduleName + '';
+				if (!modules[moduleName]) throw 'unknown module name:' + moduleName + '.';
+				if (!modules[moduleName][actionName]) throw 'unknown action name:' + actionName + ' of module:' + moduleName + '';
 				apply(modules[moduleName][actionName], Array.prototype.slice.call(arguments, 2), modules[moduleName]);
 			});
 		},
