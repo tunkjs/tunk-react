@@ -6,8 +6,8 @@
 
     tunk.connectionApi.addStateUpdatedListener(function (targetObject, stateName, newValue, action) {
 
-        if (targetObject.beforeFlowIn)
-            targetObject.beforeFlowIn.call(targetObject, stateName, newValue, action);
+        if (targetObject.beforeStateInject)
+            targetObject.beforeStateInject.call(targetObject, stateName, newValue, action);
 
         var state = {};
         state[stateName] = newValue;
@@ -25,6 +25,7 @@
 
 
         function connect_(TargetComponent) {
+            var stateOptions_;
 
             if (actionOptions) {
 
@@ -42,6 +43,7 @@
             }
 
             if(stateOptions){
+
                 var props = Object.keys(stateOptions), types;
                 if(props.length) {
                     TargetComponent.propTypes = TargetComponent.propTypes || {};
@@ -52,11 +54,21 @@
                         React.PropTypes.object,
                         React.PropTypes.string,
                     ]);
+
+                    for(var i=0,l=props.length;i<l;i++){
+                        TargetComponent.propTypes[props[i]] = TargetComponent.propTypes[props[i]] || types;
+                    }
+
+                    stateOptions_ = {};
+                    for (var x in stateOptions) if (stateOptions.hasOwnProperty(x)) {
+                        if (typeof stateOptions[x] === 'string' && stateOptions[x].indexOf('.') > -1) {
+                            stateOptions_[x] = stateOptions[x].split('.');
+                        } else {
+                            throw 'the path of state should had dot separator: ' + x + ':' + stateOptions[x];
+                        }
+                    }
                 }
-                for(var i=0,l=props.length;i<l;i++){
-                    TargetComponent.propTypes[props[i]] = TargetComponent.propTypes[props[i]] || types;
-                }
-                console.log(types);
+
             }
 
             tunk.connectionApi.setDispatchMethod(TargetComponent.prototype, 'dispatch', function (dispatch) {
@@ -69,37 +81,17 @@
 
 
             var AgentComponent = React.createClass({
-
                 getInitialState: function() {
-
-                    if (stateOptions) {
-
-                        var stateOptions_ = {};
-
-                        for (var x in stateOptions) if (stateOptions.hasOwnProperty(x)) {
-                            if (typeof stateOptions[x] === 'string' && stateOptions[x].indexOf('.') > -1) {
-                                stateOptions_[x] = stateOptions[x].split('.');
-                            } else {
-                                throw 'the path of state should had dot separator: ' + x + ':' + stateOptions[x];
-                            }
-                        }
-
-                        return tunk.connectionApi.connectState(this, stateOptions_);
-                    }
-
-                    return {};
+                    return stateOptions_?tunk.connectionApi.connectState(this, stateOptions_):{};
                 },
-
                 componentWillUnmount:function() {
-                    if (stateOptions) {
-                        tunk.connectionApi.disconnect(this, stateOptions);
+                    if (this._stateOptions_) {
+                        tunk.connectionApi.disconnect(this, this._stateOptions_);
                     }
                 },
-
                 render:function() {
                     return React.createElement(TargetComponent, Object.assign({}, this.props, this.state));
                 }
-
             });
 
             return AgentComponent;
