@@ -1,5 +1,5 @@
 import React, { Component, PropTypes } from 'react'
-import { connect } from 'tunk-react'
+import { connect } from '../tunk-react'
 import '../store/counter';
 import ReactDOM from 'react-dom';
 
@@ -30,10 +30,6 @@ class Btn extends Component {
   incrementAsync:'counter.incrementAsync',
 })
 export default class Counter extends Component {
-
-	static propTypes = {
-      count: PropTypes.number.isRequired
-	}
 
 	componentWillReceiveProps(props) {
 		const el = ReactDOM.findDOMNode(this.refs.btn1);

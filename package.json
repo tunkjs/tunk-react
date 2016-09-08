@@ -1,6 +1,6 @@
 {
   "name": "tunk-react",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "React bindings for tunk.",
   "main": "tunk-react.js",
   "author": "steven chen <522702986@qq.com>",

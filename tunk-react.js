@@ -41,6 +41,24 @@
                 tunk.connectionApi.connectActions(TargetComponent.prototype, actionOptions_);
             }
 
+            if(stateOptions){
+                var props = Object.keys(stateOptions), types;
+                if(props.length) {
+                    TargetComponent.propTypes = TargetComponent.propTypes || {};
+                    types = React.PropTypes.oneOfType([
+                        React.PropTypes.number,
+                        React.PropTypes.array,
+                        React.PropTypes.bool,
+                        React.PropTypes.object,
+                        React.PropTypes.string,
+                    ]);
+                }
+                for(var i=0,l=props.length;i<l;i++){
+                    TargetComponent.propTypes[props[i]] = TargetComponent.propTypes[props[i]] || types;
+                }
+                console.log(types);
+            }
+
             tunk.connectionApi.setDispatchMethod(TargetComponent.prototype, 'dispatch', function (dispatch) {
                 return function (name) {
                     if (typeof name !== 'string' || name.indexOf('.') === -1) throw 'the first argument should has dot between module name and action name: ' + name;
