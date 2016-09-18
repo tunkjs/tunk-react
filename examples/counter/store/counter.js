@@ -1,7 +1,7 @@
-import {extend, action} from 'tunk';
+import {create, action} from 'tunk';
 
 
-@extend
+@create
 export default class counter {
   //不允许异步，应该保持简单
   constructor(){
