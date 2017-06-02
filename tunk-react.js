@@ -3,6 +3,7 @@
     var tunk = require('tunk');
     var React = require('react');
     var Component = React.Component;
+    var PropTypes = require('prop-types');
 
 
     tunk.hook('updateComponentState', function(origin){
@@ -29,17 +30,29 @@
             var stateOptions_;
 
             if (actionOptions) {
-
-                var tmp;
-
-                for (var x in actionOptions) if (actionOptions.hasOwnProperty(x)) {
-                    if (typeof actionOptions[x] === 'string' && actionOptions[x].indexOf('.') > -1) {
-                        tmp = actionOptions[x].split('.');
-                        tunk.connection.action(TargetComponent.prototype, x, tmp[0], tmp[1]);
-                    } else {
-                        throw 'the action option should has dot between module name and action name ' + x + ':' + actionOptions[x];
+            
+                if(actionOptions.constructor === Array) {
+                    for (var i=0, x=actionOptions[0]; i<actionOptions.length; i++, x=actionOptions[i]) {
+                        var proto = tunk.connection.getModule(x).__proto__,
+                            protoNames = Object.getOwnPropertyNames(proto);
+                        for(var i = 0, y = protoNames[0]; i< protoNames.length; i++, y = protoNames[i]) if(proto[y].actionOptions) {
+                            tunk.connection.action(TargetComponent.prototype, x + '_' + y, x, y);
+                        }
                     }
-                }
+                }else
+                    for (var x in actionOptions) if (actionOptions.hasOwnProperty(x)) {
+                        if (typeof actionOptions[x] === 'string' )
+                            if(actionOptions[x].indexOf('.') > -1) {
+                                tmp = actionOptions[x].split('.');
+                                tunk.connection.action(TargetComponent.prototype, x, tmp[0], tmp[1]);
+                            } else {
+                                var proto = tunk.connection.getModule(actionOptions[x]).__proto__,
+                                    protoNames = Object.getOwnPropertyNames(proto);
+                                for(var i = 0, y = protoNames[0]; i< protoNames.length; i++, y = protoNames[i]) if(proto[y].actionOptions) {
+                                    tunk.connection.action(TargetComponent.prototype, x + '_' + y, actionOptions[x], y);
+                                }
+                            }
+                    }
             }
 
             if(stateOptions){
@@ -47,12 +60,12 @@
                 var props = Object.keys(stateOptions), types;
                 if(props.length) {
                     TargetComponent.propTypes = TargetComponent.propTypes || {};
-                    types = React.PropTypes.oneOfType([
-                        React.PropTypes.number,
-                        React.PropTypes.array,
-                        React.PropTypes.bool,
-                        React.PropTypes.object,
-                        React.PropTypes.string,
+                    types = PropTypes.oneOfType([
+                        PropTypes.number,
+                        PropTypes.array,
+                        PropTypes.bool,
+                        PropTypes.object,
+                        PropTypes.string,
                     ]);
 
                     for(var i=0,l=props.length;i<l;i++){
@@ -60,13 +73,15 @@
                     }
 
                     stateOptions_ = {};
-                    for (var x in stateOptions) if (stateOptions.hasOwnProperty(x)) {
-                        if (typeof stateOptions[x] === 'string' && stateOptions[x].indexOf('.') > -1) {
-                            stateOptions_[x] = stateOptions[x].split('.');
-                        } else {
-                            throw 'the path of state should had dot separator ' + x + ':' + stateOptions[x];
+
+                    if(stateOptions.constructor === Array) {
+                        for (var i=0; i<stateOptions.length; i++) {
+                            stateOptions_[stateOptions[i]] = stateOptions[i].split('.');
                         }
-                    }
+                    }else
+                        for (var x in stateOptions) if (stateOptions.hasOwnProperty(x)) {
+                            stateOptions_[x] = stateOptions[x].split('.');
+                        }
                 }
 
             }
@@ -79,14 +94,17 @@
                 }
             });
 
-            var AgentComponent = React.createClass({
-                getInitialState: function() {
-                    var state = {};
-                    if(stateOptions_) for(var x in stateOptions_){
-                        state[x] = tunk.connection.state(this, x, stateOptions_[x])
-                    }
-                    return state;
-                },
+            function AgentComponent(props){
+                Component.call(this, props);
+                this.state = {};
+                if(stateOptions_) for(var x in stateOptions_){
+                    this.state[x] = tunk.connection.state(this, x, stateOptions_[x])
+                }
+            }
+            AgentComponent.prototype = new Component();
+
+            Object.assign(AgentComponent.prototype, {
+                constructor: AgentComponent,
                 componentWillUnmount:function() {
                     tunk.connection.clean(this);
                 },
@@ -94,6 +112,23 @@
                     return React.createElement(TargetComponent, Object.assign({}, this.props, this.state));
                 }
             });
+
+
+            // var AgentComponent = React.createClass({
+            //     getInitialState: function() {
+            //         var state = {};
+            //         if(stateOptions_) for(var x in stateOptions_){
+            //             state[x] = tunk.connection.state(this, x, stateOptions_[x])
+            //         }
+            //         return state;
+            //     },
+            //     componentWillUnmount:function() {
+            //         tunk.connection.clean(this);
+            //     },
+            //     render:function() {
+            //         return React.createElement(TargetComponent, Object.assign({}, this.props, this.state));
+            //     }
+            // });
 
             return AgentComponent;
         }
