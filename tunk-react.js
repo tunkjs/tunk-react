@@ -22,7 +22,7 @@
                         // 只更新 changedFields 字段
                         if (statePath[1] && changedFields.indexOf(statePath[1]) === -1) continue;
                         //减少克隆次数，分发出去到达 View 的数据用同一个副本，减少调用 hooks.getValueFromStore
-                        ((targetObject, propName, newValue, options) => {
+                        (function(targetObject, propName, newValue, options) {
                             if (targetObject.beforeStateInject)
                                 targetObject.beforeStateInject.call(targetObject, propName, newValue, module + '.' + action);
                             var state = {};
