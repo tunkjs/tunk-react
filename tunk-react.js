@@ -9,12 +9,12 @@
 
         var tunk = this;
         utils.hook('store', function (origin) {
-            return function (state, newState, options) {
+            return function (newState, options) {
                 var pipes = connections[options.moduleName],
                     changedFields = Object.keys(newState),
                     statePath;
 
-                origin(state, newState, options);
+                origin(newState, options);
 
                 setTimeout(function () {
                     if (pipes && pipes.length) for (var i = 0, l = pipes.length; i < l; i++) if (pipes[i]) {
@@ -28,7 +28,7 @@
                             var state = {};
                             state[propName] = newValue;
                             targetObject.setState(state);
-                        })(pipes[i].comp, pipes[i].propName, utils.hooks.getValueFromStore(statePath, options), options);
+                        })(pipes[i].comp, pipes[i].propName, utils.hooks.getState(statePath, options), options);
                     }
                 });
             }
@@ -48,7 +48,7 @@
                 targetObject._tunkOptions_ = targetObject._tunkOptions_ || {};
                 targetObject._tunkOptions_[propName] = statePath;
                 //返回组件默认数据
-                return utils.hooks.getValueFromStore(statePath, utils.modules[statePath[0]].options);
+                return utils.hooks.getState(statePath, utils.modules[statePath[0]].options);
             },
             action: function (target, propName, moduleName, actionName) {
                 target[propName] = function () {
