@@ -22,7 +22,7 @@
                         // 只更新 changedFields 字段
                         if (statePath[1] && changedFields.indexOf(statePath[1]) === -1) continue;
                         //减少克隆次数，分发出去到达 View 的数据用同一个副本，减少调用
-                        (function(targetObject, propName, newValue, options) {
+                        (function (targetObject, propName, newValue, options) {
                             if (targetObject.beforeStateInject)
                                 targetObject.beforeStateInject.call(targetObject, propName, newValue, module + '.' + action);
                             var state = {};
@@ -34,9 +34,7 @@
             }
         });
 
-        tunk.connect = connect;
-
-        
+        tunkReact.connect = connect;
 
         function connect(stateOptions = {}, actionOptions = {}) {
 
@@ -46,36 +44,25 @@
 
             } else return connect_;
 
-
             function connect_(TargetComponent) {
                 var stateOptions_;
 
                 if (actionOptions) {
 
-                    if (actionOptions.constructor === Array) {
-                        for (var i = 0, x = actionOptions[0]; i < actionOptions.length; i++ , x = actionOptions[i]) {
-                            var proto = getModule(x).__proto__,
-                                protoNames = Object.getOwnPropertyNames(proto);
-                            for (var i = 0, y = protoNames[0]; i < protoNames.length; i++ , y = protoNames[i]) if (proto[y].options) {
-                                connectAction(TargetComponent.prototype, x + '_' + y, x, y);
-                                console.log(x + '_' + y)
-                            }
-                        }
-                    } else
-                        for (var x in actionOptions) if (actionOptions.hasOwnProperty(x)) {
-                            if (typeof actionOptions[x] === 'string')
-                                if (actionOptions[x].indexOf('.') > -1) {
-                                    tmp = actionOptions[x].split('.');
-                                    connectAction(TargetComponent.prototype, x, tmp[0], tmp[1]);
-                                } else {
-                                    var proto = getModule(actionOptions[x]).__proto__,
-                                        protoNames = Object.getOwnPropertyNames(proto);
-                                    for (var i = 0, y = protoNames[0]; i < protoNames.length; i++ , y = protoNames[i]) if (proto[y].options) {
-                                        connectAction(TargetComponent.prototype, x + '_' + y, actionOptions[x], y);
-                                        console.log(x + '_' + y)
-                                    }
+                    for (var x in actionOptions) if (actionOptions.hasOwnProperty(x)) {
+                        if (typeof actionOptions[x] === 'string')
+                            if (actionOptions[x].indexOf('.') > -1) {
+                                tmp = actionOptions[x].split('.');
+                                connectAction(TargetComponent.prototype, x, tmp[0], tmp[1]);
+                            } else {
+                                var proto = getModule(actionOptions[x]).__proto__,
+                                    protoNames = Object.getOwnPropertyNames(proto);
+                                for (var i = 0, y = protoNames[0]; i < protoNames.length; i++ , y = protoNames[i]) if (proto[y].options) {
+                                    connectAction(TargetComponent.prototype, x + '_' + y, actionOptions[x], y);
+                                    console.log(x + '_' + y)
                                 }
-                        }
+                            }
+                    }
                 }
 
                 if (stateOptions) {
@@ -97,14 +84,9 @@
 
                         stateOptions_ = {};
 
-                        if (stateOptions.constructor === Array) {
-                            for (var i = 0; i < stateOptions.length; i++) {
-                                stateOptions_[stateOptions[i]] = stateOptions[i].split('.');
-                            }
-                        } else
-                            for (var x in stateOptions) if (stateOptions.hasOwnProperty(x)) {
-                                stateOptions_[x] = stateOptions[x].split('.');
-                            }
+                        for (var x in stateOptions) if (stateOptions.hasOwnProperty(x)) {
+                            stateOptions_[x] = stateOptions[x].split('.');
+                        }
                     }
 
                 }
@@ -145,30 +127,30 @@
             }
         }
 
-            function connectState(targetObject, propName, statePath) {
-                if (!statePath[0] || !utils.modules[statePath[0]]) throw '[tunk]:unknown module name:' + statePath[0];
-                connections[statePath[0]] = connections[statePath[0]] || [];
-                connections[statePath[0]].push({
-                    comp: targetObject,
-                    propName: propName,
-                    statePath: statePath,
-                });
-                targetObject._tunkOptions_ = targetObject._tunkOptions_ || {};
-                targetObject._tunkOptions_[propName] = statePath;
-                //返回组件默认数据
-                return utils.hooks.getState(statePath, utils.modules[statePath[0]].options);
-            }
+        function connectState(targetObject, propName, statePath) {
+            if (!statePath[0] || !utils.modules[statePath[0]]) throw '[tunk]:unknown module name:' + statePath[0];
+            connections[statePath[0]] = connections[statePath[0]] || [];
+            connections[statePath[0]].push({
+                comp: targetObject,
+                propName: propName,
+                statePath: statePath,
+            });
+            targetObject._tunkOptions_ = targetObject._tunkOptions_ || {};
+            targetObject._tunkOptions_[propName] = statePath;
+            //返回组件默认数据
+            return utils.hooks.getState(statePath, utils.modules[statePath[0]].options);
+        }
 
-            function connectAction(target, propName, moduleName, actionName) {
-                target[propName] = function () {
-                    utils.dispatchAction(moduleName, actionName, arguments)
-                };
-            }
+        function connectAction(target, propName, moduleName, actionName) {
+            target[propName] = function () {
+                utils.dispatchAction(moduleName, actionName, arguments)
+            };
+        }
 
-            function getModule(moduleName) {
-                if (!utils.modules[moduleName]) throw '[tunk]:unknown module name ' + moduleName;
-                return utils.modules[moduleName];
-            }
+        function getModule(moduleName) {
+            if (!utils.modules[moduleName]) throw '[tunk]:unknown module name ' + moduleName;
+            return utils.modules[moduleName];
+        }
     }
 
     if (typeof module === 'object' && module.exports) {
