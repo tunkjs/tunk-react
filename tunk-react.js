@@ -36,31 +36,7 @@
 
         tunk.connect = connect;
 
-        var connection = {
-            state: function (targetObject, propName, statePath) {
-                if (!statePath[0] || !utils.modules[statePath[0]]) throw '[tunk]:unknown module name:' + statePath[0];
-                connections[statePath[0]] = connections[statePath[0]] || [];
-                connections[statePath[0]].push({
-                    comp: targetObject,
-                    propName: propName,
-                    statePath: statePath,
-                });
-                targetObject._tunkOptions_ = targetObject._tunkOptions_ || {};
-                targetObject._tunkOptions_[propName] = statePath;
-                //返回组件默认数据
-                return utils.hooks.getState(statePath, utils.modules[statePath[0]].options);
-            },
-            action: function (target, propName, moduleName, actionName) {
-                target[propName] = function () {
-                    utils.dispatchAction(moduleName, actionName, arguments)
-                };
-            },
-
-            getModule: function (moduleName) {
-                if (!utils.modules[moduleName]) throw '[tunk]:unknown module name ' + moduleName;
-                return utils.modules[moduleName];
-            },
-        };
+        
 
         function connect(stateOptions = {}, actionOptions = {}) {
 
@@ -78,10 +54,10 @@
 
                     if (actionOptions.constructor === Array) {
                         for (var i = 0, x = actionOptions[0]; i < actionOptions.length; i++ , x = actionOptions[i]) {
-                            var proto = connection.getModule(x).__proto__,
+                            var proto = getModule(x).__proto__,
                                 protoNames = Object.getOwnPropertyNames(proto);
                             for (var i = 0, y = protoNames[0]; i < protoNames.length; i++ , y = protoNames[i]) if (proto[y].options) {
-                                connection.action(TargetComponent.prototype, x + '_' + y, x, y);
+                                connectAction(TargetComponent.prototype, x + '_' + y, x, y);
                                 console.log(x + '_' + y)
                             }
                         }
@@ -90,12 +66,12 @@
                             if (typeof actionOptions[x] === 'string')
                                 if (actionOptions[x].indexOf('.') > -1) {
                                     tmp = actionOptions[x].split('.');
-                                    connection.action(TargetComponent.prototype, x, tmp[0], tmp[1]);
+                                    connectAction(TargetComponent.prototype, x, tmp[0], tmp[1]);
                                 } else {
-                                    var proto = connection.getModule(actionOptions[x]).__proto__,
+                                    var proto = getModule(actionOptions[x]).__proto__,
                                         protoNames = Object.getOwnPropertyNames(proto);
                                     for (var i = 0, y = protoNames[0]; i < protoNames.length; i++ , y = protoNames[i]) if (proto[y].options) {
-                                        connection.action(TargetComponent.prototype, x + '_' + y, actionOptions[x], y);
+                                        connectAction(TargetComponent.prototype, x + '_' + y, actionOptions[x], y);
                                         console.log(x + '_' + y)
                                     }
                                 }
@@ -143,7 +119,7 @@
                     Component.call(this, props);
                     this.state = {};
                     if (stateOptions_) for (var x in stateOptions_) {
-                        this.state[x] = connection.state(this, x, stateOptions_[x])
+                        this.state[x] = connectState(this, x, stateOptions_[x])
                     }
                 }
                 AgentComponent.prototype = new Component();
@@ -168,6 +144,31 @@
                 return AgentComponent;
             }
         }
+
+            function connectState(targetObject, propName, statePath) {
+                if (!statePath[0] || !utils.modules[statePath[0]]) throw '[tunk]:unknown module name:' + statePath[0];
+                connections[statePath[0]] = connections[statePath[0]] || [];
+                connections[statePath[0]].push({
+                    comp: targetObject,
+                    propName: propName,
+                    statePath: statePath,
+                });
+                targetObject._tunkOptions_ = targetObject._tunkOptions_ || {};
+                targetObject._tunkOptions_[propName] = statePath;
+                //返回组件默认数据
+                return utils.hooks.getState(statePath, utils.modules[statePath[0]].options);
+            }
+
+            function connectAction(target, propName, moduleName, actionName) {
+                target[propName] = function () {
+                    utils.dispatchAction(moduleName, actionName, arguments)
+                };
+            }
+
+            function getModule(moduleName) {
+                if (!utils.modules[moduleName]) throw '[tunk]:unknown module name ' + moduleName;
+                return utils.modules[moduleName];
+            }
     }
 
     if (typeof module === 'object' && module.exports) {
