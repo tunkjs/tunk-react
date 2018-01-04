@@ -46,23 +46,17 @@
 
             function connect_(TargetComponent) {
                 var stateOptions_;
-
                 if (actionOptions) {
-
-                    for (var x in actionOptions) if (actionOptions.hasOwnProperty(x)) {
-                        if (typeof actionOptions[x] === 'string')
-                            if (actionOptions[x].indexOf('.') > -1) {
+                    if(actionOptions.constructor === Object) {
+                        for (var x in actionOptions) if (actionOptions.hasOwnProperty(x)) {
+                            if (actionOptions[x] && typeof actionOptions[x] === 'string')
                                 tmp = actionOptions[x].split('.');
                                 connectAction(TargetComponent.prototype, x, tmp[0], tmp[1]);
-                            } else {
-                                var proto = getModule(actionOptions[x]).__proto__,
-                                    protoNames = Object.getOwnPropertyNames(proto);
-                                for (var i = 0, y = protoNames[0]; i < protoNames.length; i++ , y = protoNames[i]) if (proto[y].options) {
-                                    connectAction(TargetComponent.prototype, x + '_' + y, actionOptions[x], y);
-                                    console.log(x + '_' + y)
-                                }
-                            }
+                        }
+                    } else {
+                        throw '[tunk-react]:the actions setting should be type of Object';
                     }
+                    
                 }
 
                 if (stateOptions) {
@@ -142,9 +136,22 @@
         }
 
         function connectAction(target, propName, moduleName, actionName) {
-            target[propName] = function () {
-                utils.dispatchAction(moduleName, actionName, arguments)
-            };
+            if(!actionName){
+                var proto = getModule(moduleName).__proto__,
+                    protoNames = Object.getOwnPropertyNames(proto);
+                target[propName] = {};
+                for (var i = 0, y = protoNames[0]; i < protoNames.length; i++ , y = protoNames[i]) if (proto[y].options) {
+                    (function(moduleName, actionName){
+                        target[propName][actionName] = function () {
+                            utils.dispatchAction(moduleName, actionName, arguments)
+                        };
+                    })(moduleName, y)
+                }
+            }else {
+                target[propName] = function () {
+                    utils.dispatchAction(moduleName, actionName, arguments)
+                };
+            }
         }
 
         function getModule(moduleName) {
