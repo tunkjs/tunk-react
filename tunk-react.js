@@ -17,18 +17,21 @@
                 origin(newState, options);
 
                 setTimeout(function () {
+                    var stateChangeTargets = [], targetObject;
+
                     if (pipes && pipes.length) for (var i = 0, l = pipes.length; i < l; i++) if (pipes[i]) {
                         statePath = pipes[i].statePath;
                         // 只更新 changedFields 字段
                         if (statePath[1] && changedFields.indexOf(statePath[1]) === -1) continue;
-                        //减少克隆次数，分发出去到达 View 的数据用同一个副本，减少调用
                         (function (targetObject, propName, newValue, options) {
-                            if (targetObject.beforeStateInject)
-                                targetObject.beforeStateInject.call(targetObject, propName, newValue, module + '.' + action);
-                            var state = {};
-                            state[propName] = newValue;
-                            targetObject.setState(state);
+                            targetObject._state_ = targetObject._state_ || {};
+                            targetObject._state_[propName] = newValue;
+                            if (stateChangeTargets.indexOf(targetObject) === -1) stateChangeTargets.push(targetObject);
                         })(pipes[i].comp, pipes[i].propName, utils.hooks.getState(statePath, options), options);
+                    }
+                    for (var i = 0, l = stateChangeTargets.length; i < l; i++)  {
+                        stateChangeTargets[i].setState(stateChangeTargets[i]._state_);
+                        stateChangeTargets[i]._state_ = null;
                     }
                 });
             }
